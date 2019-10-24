@@ -1,0 +1,1 @@
+/usr/bin/cc -g   CMakeFiles/1A.dir/apps/main.c.o CMakeFiles/1A.dir/src/encrypt.c.o CMakeFiles/1A.dir/src/digest.c.o CMakeFiles/1A.dir/src/my_hmac.c.o  -o 1A  -L/home/jack/works/projects/openssl-demo/1A/extern/openssl -Wl,-rpath,/home/jack/works/projects/openssl-demo/1A/extern/openssl -lcrypto 

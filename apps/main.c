@@ -1,6 +1,15 @@
 #include "1A/digest.h"
 #include "1A/encrypt.h"
 #include "1A/my_hmac.h"
+#include "1A/helper.h"
+
+#include <ctype.h>
+
+/* 大写单词转小写 */
+void upper_to_lower(char *str) {
+  for (int i = 0; str[i]; i++)
+    str[i] = tolower(str[i]);
+}
 
 /* 显示帮助信息 */
 void show_help() {
@@ -30,9 +39,13 @@ static struct option long_options[] = {{"mode", required_argument, 0, 'm'},
 
 int main(int argc, char *argv[]) {
   /* 选项定义 */
-  char *mode = NULL, *algorithm = NULL, *key = NULL, *iv = NULL, *input = NULL,
-       *output = NULL, *format = NULL;
-  int ch;
+  char *mode = NULL, *algorithm = NULL, *input = NULL, *output = NULL,
+       *format = NULL;
+  unsigned char *key = NULL, *iv = NULL;
+  int ch = 0;
+  int len = 0;
+  unsigned char *nbuf = (unsigned char *)malloc(BUFSIZE);
+  int nlen = 0;
   while (1) {
     ch = getopt_long(argc, argv, "m:a:k:v:i:o:f:h", long_options, NULL);
     if (ch == -1)
@@ -43,12 +56,19 @@ int main(int argc, char *argv[]) {
       break;
     case 'a':
       algorithm = optarg;
+      upper_to_lower(algorithm);
       break;
     case 'k':
-      key = optarg;
+      key = (unsigned char *)optarg;
+      len = strlen((char *)key);
+      hex2bin(nbuf, &nlen, key, len);
+      memcpy(key, nbuf, nlen);
       break;
     case 'v':
-      iv = optarg;
+      iv = (unsigned char *)optarg;
+      len = strlen((char *)iv);
+      hex2bin(nbuf, &nlen, iv, len);
+      memcpy(iv, nbuf, nlen);
       break;
     case 'i':
       input = optarg;
@@ -61,7 +81,7 @@ int main(int argc, char *argv[]) {
       break;
     case 'h':
       show_help();
-      exit(1);
+      exit(0);
     default:
       printf("unknow options!\n\n");
       show_help();
@@ -72,18 +92,26 @@ int main(int argc, char *argv[]) {
   if (!format)
     format = "BINARY";
 
-  if (!strncmp(mode, "digest", strlen("digest"))) {
+  /* if (!strncmp(mode, "digest", strlen("digest"))) { */
     /* digest运算 */
-    digest(algorithm, input, output, format);
-  } else if (!strncmp(mode, "hmac", strlen("hmac"))) {
+  //    digest(algorithm, input, output, format);
+  /* } else if (!strncmp(mode, "hmac", strlen("hmac"))) { */
     /* hmac运算 */
     /* TODO: 函数定义有误,需重新实现 */
-    my_hmac(algorithm, input, output, format);
-  } else {
-    /* 加解密运算 */
-    int enc = !!strncmp(mode, "encrypt", strlen("encrypt"));
-    my_encrypt(enc, algorithm, (const unsigned char *)key,
-               (const unsigned char *)iv, input, output, format);
-  }
+  //  my_hmac(algorithm, key, input, output, format);
+  /* } else { */
+  /* 加解密运算 */
+  int enc = strncmp(mode, "encrypt", strlen("encrypt")) ? 0 : 1;
+  my_encrypt(enc, algorithm, key, iv, input, output, format);
+  /* } */
+  /* if (strncmp(argv[1], "1", 1) == 0)  */
+  /*   my_encrypt(1, "aes-128-cbc", (const unsigned char *)"0123456789012345",
+   * (const unsigned char *)"0123456789012345", "in.txt", "out.bin", "base64");
+   */
+  /* else */
+  /*   my_encrypt(0, "aes-128-cbc", (const unsigned char *)"0123456789012345",
+   * (const unsigned char *)"0123456789012345", "out.bin", "out.bin.dec",
+   * "base64"); */
+  free(nbuf);
   return 0;
 }

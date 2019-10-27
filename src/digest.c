@@ -1,4 +1,6 @@
 #include "1A/1A.h"
+#include "1A/helper.h"
+
 
 /* 错误处理 */
 void digest_handleError(EVP_MD_CTX *mdctx, FILE *in, FILE *out) {
@@ -23,40 +25,54 @@ int digest(const char *algorithm, const char *input, const char *output, const c
   /* 创建摘要算法 */
   const EVP_MD *md = EVP_get_digestbyname(algorithm);
   if (!md) {
-    fprintf(stderr, "ERROR, EVP_get_digestbyname failed.\n");
-    exit(1);
+    fprintf(stderr, "ERROR, EVP_get_digestbyname %s.\n", ERR_error_string(ERR_get_error(), NULL));
+    digest_handleError(NULL, in, out);
   }
 
   /* 创建摘要上下文 */
   EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+  if (!mdctx) {
+    fprintf(stderr, "ERROR: EVP_MD_CTX_new %s.\n", ERR_error_string(ERR_get_error(), NULL));
+    digest_handleError(mdctx, in, out);
+  }
 
   /* 标准摘要算法处理流程 */
-  if (!EVP_DigestInit_ex(mdctx, md, NULL))
+  if (!EVP_DigestInit_ex(mdctx, md, NULL)) {
+    fprintf(stderr, "ERROR: EVP_DigestInit_ex %s.\n", ERR_error_string(ERR_get_error(), NULL));
     digest_handleError(mdctx, in, out);
+  }
   
   for (;;) {
     inlen = fread(inbuf, 1, 1024, in);
     if (inlen <= 0) {
-      if (ferror(in))
-        digest_handleError(mdctx, in, out);
-      else
-        break;
+         break;
     }
-    if (!EVP_DigestUpdate(mdctx, inbuf, inlen))
+    if (!EVP_DigestUpdate(mdctx, inbuf, inlen)) {
+      fprintf(stderr, "ERROR: EVP_DigestUpdate %s.\n", ERR_error_string(ERR_get_error(), NULL));
       digest_handleError(mdctx, in, out);
+    }
+  }
+
+  /* 读取遇到错误 */
+  if (ferror(in)) {
+    digest_handleError(mdctx, in, out);
   }
 
   /* 为摘要结果分配足够大的空间 */
   unsigned char *digest = (unsigned char *)OPENSSL_malloc(EVP_MD_size(md));
   unsigned int digest_len;
-  if (!digest)
+  if (!digest) {
+    fprintf(stderr, "ERROR: OPENSSL_malloc %s\n", ERR_error_string(ERR_get_error(), NULL));
     digest_handleError(mdctx, in, out);
+  }
 
   /* 将摘要结果写入到digest变量中 */
   if (!EVP_DigestFinal_ex(mdctx, digest, &digest_len)) {
     OPENSSL_free(digest);
+    fprintf(stderr, "ERROR: EVP_DigestFinal_ex %s\n", ERR_error_string(ERR_get_error(), NULL));
     digest_handleError(mdctx, in, out);
   }
+  // bin2other(digest, (int *)&digest_len, format);
   fwrite(digest, 1, digest_len, out);
 
   /* 释放内存 */

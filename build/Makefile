@@ -204,6 +204,33 @@ src/encrypt.c.s:
 	$(MAKE) -f CMakeFiles/1A.dir/build.make CMakeFiles/1A.dir/src/encrypt.c.s
 .PHONY : src/encrypt.c.s
 
+src/helper.o: src/helper.c.o
+
+.PHONY : src/helper.o
+
+# target to build an object file
+src/helper.c.o:
+	$(MAKE) -f CMakeFiles/1A.dir/build.make CMakeFiles/1A.dir/src/helper.c.o
+.PHONY : src/helper.c.o
+
+src/helper.i: src/helper.c.i
+
+.PHONY : src/helper.i
+
+# target to preprocess a source file
+src/helper.c.i:
+	$(MAKE) -f CMakeFiles/1A.dir/build.make CMakeFiles/1A.dir/src/helper.c.i
+.PHONY : src/helper.c.i
+
+src/helper.s: src/helper.c.s
+
+.PHONY : src/helper.s
+
+# target to generate assembly for a file
+src/helper.c.s:
+	$(MAKE) -f CMakeFiles/1A.dir/build.make CMakeFiles/1A.dir/src/helper.c.s
+.PHONY : src/helper.c.s
+
 src/my_hmac.o: src/my_hmac.c.o
 
 .PHONY : src/my_hmac.o
@@ -249,6 +276,9 @@ help:
 	@echo "... src/encrypt.o"
 	@echo "... src/encrypt.i"
 	@echo "... src/encrypt.s"
+	@echo "... src/helper.o"
+	@echo "... src/helper.i"
+	@echo "... src/helper.s"
 	@echo "... src/my_hmac.o"
 	@echo "... src/my_hmac.i"
 	@echo "... src/my_hmac.s"

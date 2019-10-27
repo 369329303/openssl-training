@@ -7,8 +7,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <error.h>
+#include <string.h>
+#include <errno.h>
 
 typedef unsigned char byte;
+
+#define BUFSIZE 1200
 
 /* 错误处理 */
 void handleErrors(void);

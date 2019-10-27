@@ -1,7 +1,7 @@
 #include "1A/digest.h"
 #include "1A/encrypt.h"
-#include "1A/my_hmac.h"
 #include "1A/helper.h"
+#include "1A/my_hmac.h"
 
 #include <ctype.h>
 
@@ -92,26 +92,18 @@ int main(int argc, char *argv[]) {
   if (!format)
     format = "BINARY";
 
-  /* if (!strncmp(mode, "digest", strlen("digest"))) { */
+  if (!strncmp(mode, "digest", strlen("digest"))) {
     /* digest运算 */
-  //    digest(algorithm, input, output, format);
-  /* } else if (!strncmp(mode, "hmac", strlen("hmac"))) { */
+    digest(algorithm, input, output, format);
+  } else if (!strncmp(mode, "hmac", strlen("hmac"))) {
     /* hmac运算 */
-    /* TODO: 函数定义有误,需重新实现 */
-  //  my_hmac(algorithm, key, input, output, format);
-  /* } else { */
-  /* 加解密运算 */
-  int enc = strncmp(mode, "encrypt", strlen("encrypt")) ? 0 : 1;
-  my_encrypt(enc, algorithm, key, iv, input, output, format);
-  /* } */
-  /* if (strncmp(argv[1], "1", 1) == 0)  */
-  /*   my_encrypt(1, "aes-128-cbc", (const unsigned char *)"0123456789012345",
-   * (const unsigned char *)"0123456789012345", "in.txt", "out.bin", "base64");
-   */
-  /* else */
-  /*   my_encrypt(0, "aes-128-cbc", (const unsigned char *)"0123456789012345",
-   * (const unsigned char *)"0123456789012345", "out.bin", "out.bin.dec",
-   * "base64"); */
+    my_hmac(algorithm, key, input, output, format);
+  } else {
+    /* 加解密运算 */
+    int enc = strncmp(mode, "encrypt", strlen("encrypt")) ? 0 : 1;
+    my_encrypt(enc, algorithm, key, iv, input, output, format);
+  }
+
   free(nbuf);
   return 0;
 }

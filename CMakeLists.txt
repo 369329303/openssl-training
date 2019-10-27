@@ -12,6 +12,7 @@ add_executable(1A
   apps/main.c
   src/encrypt.c
   src/digest.c
+  src/helper.c
   src/my_hmac.c)
 
 # 目标include头文件目录

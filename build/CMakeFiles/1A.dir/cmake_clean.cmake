@@ -2,6 +2,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/1A.dir/apps/main.c.o"
   "CMakeFiles/1A.dir/src/encrypt.c.o"
   "CMakeFiles/1A.dir/src/digest.c.o"
+  "CMakeFiles/1A.dir/src/helper.c.o"
   "CMakeFiles/1A.dir/src/my_hmac.c.o"
   "1A.pdb"
   "1A"

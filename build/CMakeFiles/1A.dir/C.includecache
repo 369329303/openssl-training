@@ -323,12 +323,38 @@ stdlib.h
 -
 string.h
 -
+error.h
+-
+string.h
+-
+errno.h
+-
+
+../include/1A/digest.h
+1A/1A.h
+../include/1A/1A/1A.h
 
 ../include/1A/encrypt.h
 1A/1A.h
 -
 
-/home/jack/works/projects/openssl-demo/1A/src/encrypt.c
+../include/1A/helper.h
+1A/1A.h
+../include/1A/1A/1A.h
+
+../include/1A/my_hmac.h
+1A/1A.h
+../include/1A/1A/1A.h
+
+/home/jack/works/projects/openssl-demo/1A/apps/main.c
+1A/digest.h
+/home/jack/works/projects/openssl-demo/1A/apps/1A/digest.h
 1A/encrypt.h
-/home/jack/works/projects/openssl-demo/1A/src/1A/encrypt.h
+/home/jack/works/projects/openssl-demo/1A/apps/1A/encrypt.h
+1A/helper.h
+/home/jack/works/projects/openssl-demo/1A/apps/1A/helper.h
+1A/my_hmac.h
+/home/jack/works/projects/openssl-demo/1A/apps/1A/my_hmac.h
+ctype.h
+-
 

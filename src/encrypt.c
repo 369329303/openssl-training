@@ -150,8 +150,8 @@ int my_encrypt(int enc, const char *algorithm, unsigned char *key,
       EVP_EncodeFinal(b64_ctx, outbuf, &outlen);
     } else if (0 == strncmp(format, "HEX", 3)) {
       bin2hex(nbuf, &nlen, outbuf, outlen);
-      memcpy(outbuf, nbuf, nlen);
       outlen = nlen;
+      memcpy(outbuf, nbuf, outlen);
     } else if (0 != strncmp(format, "BINARY", 6)) {
       fprintf(stderr, "ERROR: WRONG FORMAT!");
     }

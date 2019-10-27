@@ -1,64 +1,20 @@
 #include "1A/my_hmac.h"
-
-/* 错误处理 */
-void my_hmac_handleError(EVP_MD_CTX *mdctx, FILE *in, FILE *out) {
-  if (!mdctx)
-    EVP_MD_CTX_free(mdctx);
-  if (!in)
-    fclose(in);
-  if (!out)
-    fclose(out);
-  exit(1);
-}
-
-/* 创建hmac的公私钥 */
-int make_keys(const char *algorithm, EVP_PKEY **skey, EVP_PKEY **vkey) {
-  /* HMAC key */
-  byte hkey[EVP_MAX_MD_SIZE];
-
-  int result = -1;
-
-  if (*skey != NULL) {
-    EVP_PKEY_free(*skey);
-    *skey = NULL;
-  }
-
-  if (*vkey != NULL) {
-    EVP_PKEY_free(*vkey);
-    *vkey = NULL;
-  }
-
-  const EVP_MD *md = EVP_get_digestbyname(algorithm);
-  int size = EVP_MD_size(md);
-
-  int rc = RAND_bytes(hkey, size);
-  if (rc != 1) {
-    printf("RAND_bytes failed, error 0x%lx\n", ERR_get_error());
-  }
-
-  *skey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hkey, size);
-  *vkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, hkey, size);
-
-  return 0;
-
-  OPENSSL_cleanse(hkey, sizeof(hkey));
-
-  /* Convert to 0/1 result */
-  return !!result;
-}
+#include "1A/helper.h"
 
 /* 消息签名 */
-int sign(const char *algorithm, const char *input,
-                    const char *output, const char *format) {
+int my_hmac(const char *algorithm, const unsigned char *key, const char *input,
+            const char *output, const char *format) {
   /* 以二进制的形式打开文件 */
   FILE *in = fopen(input, "rb"), *out = fopen(output, "wb");
-  if (!(in || out))
-    my_hmac_handleError(NULL, in, out);
+  if (!(in || out)) {
+    fprintf(stderr, "ERROR: fopen %s\n", strerror(errno));
+    exit(1);
+  }
 
-  /* hmac 的公私钥 */
-  EVP_PKEY *skey, *vkey;
-  if (!make_keys(algorithm, &skey, &vkey)) {
-    fprintf(stderr, "ERROR: make_keys failed.\n ");
+  EVP_PKEY *pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, key, 5);
+  if (!pkey) {
+    fprintf(stderr, "ERROR: EVP_PKEY_new_raw_private_key: %s\n",
+            ERR_error_string(ERR_get_error(), NULL));
     exit(1);
   }
 
@@ -67,54 +23,98 @@ int sign(const char *algorithm, const char *input,
 
   const EVP_MD *md = EVP_get_digestbyname(algorithm);
   if (!md) {
-    fprintf(stderr, "ERROR: EVP_get_digestbyname failed.\n");
+    fprintf(stderr, "ERROR: EVP_get_digestbyname %s.\n",
+            ERR_error_string(ERR_get_error(), NULL));
     exit(1);
   }
 
   /* 初始化摘要和签名 */
   EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
-  if (!EVP_DigestInit_ex(mdctx, md, NULL))
-    my_hmac_handleError(mdctx, in, out);
-  if (!EVP_DigestSignInit(mdctx, NULL, md, NULL, skey))
-    my_hmac_handleError(mdctx, in, out);
+  if (!mdctx) {
+    fprintf(stderr, "ERROR: EVP_MD_CTX_new %s\n",
+            ERR_error_string(ERR_get_error(), NULL));
+    exit(1);
+  }
+
+  /* 初始化 mdctx */
+  if (!EVP_DigestInit_ex(mdctx, md, NULL)) {
+    fprintf(stderr, "ERROR: EVP_DigestInit_ex %s\n",
+            ERR_error_string(ERR_get_error(), NULL));
+    exit(1);
+  }
+
+  /* 向mdctx中添加pkey信息 */
+  if (!EVP_DigestSignInit(mdctx, NULL, md, NULL, pkey)) {
+    fprintf(stderr, "ERROR: EVP_DigestSignInit %s\n",
+            ERR_error_string(ERR_get_error(), NULL));
+    exit(1);
+  }
 
   /* 对文件内容进行hmac */
   for (;;) {
     inlen = fread(inbuf, 1, 1024, in);
-    if (inlen <= 0) {
-      if (ferror(in)) {
-        my_hmac_handleError(mdctx, in, out);
-      } else {
-        break;
-      }
+    if (inlen <= 0)
+      break;
+    if (!EVP_DigestSignUpdate(mdctx, inbuf, inlen)) {
+      fprintf(stderr, "ERROR: EVP_DigestSignUpdate %s\n",
+              ERR_error_string(ERR_get_error(), NULL));
+      exit(1);
     }
-    
-    if (!EVP_DigestSignUpdate(mdctx, inbuf, inlen))
-      my_hmac_handleError(mdctx, in, out);
+  }
+
+  if (ferror(in)) {
+    fprintf(stderr, "ERROR: ferror %s", strerror(errno));
+    exit(1);
   }
 
   unsigned char *sig;
   size_t req, sigl;
-  /* 获取签名的长度 */
-  if (!EVP_DigestSignFinal(mdctx, NULL, &req))
-    my_hmac_handleError(mdctx, in, out);
+
+  /* 获取签名的最大长度 */
+  if (!EVP_DigestSignFinal(mdctx, NULL, &req)) {
+    fprintf(stderr, "ERROR: EVP_DigestSignFinal %s\n",
+            ERR_error_string(ERR_get_error(), NULL));
+    exit(1);
+  }
+
   sig = OPENSSL_malloc(req);
   if (!sig) {
-    fprintf(stderr, "ERROR: OPENSSL_malloc failed.\n");
-    my_hmac_handleError(mdctx, in, out);
+    fprintf(stderr, "ERROR: OPENSSL_malloc %s.\n",
+            ERR_error_string(ERR_get_error(), NULL));
+    exit(1);
+  }
+
+  /* 获取签名及其长度 */
+  if (!EVP_DigestSignFinal(mdctx, sig, &sigl)) {
+    fprintf(stderr, "ERROR: EVP_DigestSignFinal %s.\n",
+            ERR_error_string(ERR_get_error(), NULL));
+    exit(1);
+  }
+
+  unsigned char *nbuf = (unsigned char *)malloc(BUFSIZE);
+  int nlen = 0;
+  if (0 == strncmp(format, "HEX", 3)) {
+    /* 转换为hex编码 */
+    bin2hex(nbuf, &nlen, sig, sigl);
+  } else if (0 == strncmp(format, "BASE64", 6)) {
+    /* 转换为base64编码 */
+    EVP_EncodeBlock(nbuf, sig, sigl);
+    /* base64编码后的字节数 */
+    nlen = (sigl / 3 + 1) * 4;
+  } else if (0 == strncmp(format, "BINARY", 6)) {
+    nbuf = sig;
+    nlen = sigl;
+  } else {
+    fprintf(stderr, "ERROR: WRONG FORMAT!\n");
+    exit(1);
   }
   /* 将签名写入到文件中 */
-  EVP_DigestSignFinal(mdctx, sig, &sigl);
-  fwrite(sig, 1, sigl, out);
+  fwrite(nbuf, 1, nlen, out);
 
   /* 释放内存 */
+  free(nbuf);
   fclose(in);
   fclose(out);
   EVP_MD_CTX_free(mdctx);
   return 0;
-}
-
-int my_hmac(const char *algorithm, const char *input,
-            const char *output, const char *format) {
-  return sign(algorithm, input, output, format);
 }

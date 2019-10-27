@@ -1,6 +1,0 @@
-hello
-  /*
-     * Buffer for ciphertext. Ensure the buffer is long enough for the
-     * ciphertext which may be longer than the plaintext, depending on the
-     * algorithm and mode.
-     */

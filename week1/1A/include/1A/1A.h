@@ -26,4 +26,3 @@ void print_hex(FILE *fp, const unsigned char *s, int len);
 
 /* Print base64 encoded data */
 void print_b64(FILE *fp, const unsigned char *s, int len);
-

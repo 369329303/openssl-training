@@ -2,7 +2,7 @@
 #include "1A/helper.h"
 
 /* 消息签名 */
-int my_hmac(const char *algorithm, const unsigned char *key, const char *input,
+int my_hmac(const char *algorithm, const unsigned char *key, int keylen, const char *input,
             const char *output, const char *format) {
   /* 以二进制的形式打开文件 */
   FILE *in = fopen(input, "rb"), *out = fopen(output, "wb");
@@ -11,7 +11,7 @@ int my_hmac(const char *algorithm, const unsigned char *key, const char *input,
     exit(1);
   }
 
-  EVP_PKEY *pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, key, 5);
+  EVP_PKEY *pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, key, keylen);
   if (!pkey) {
     fprintf(stderr, "ERROR: EVP_PKEY_new_raw_private_key: %s\n",
             ERR_error_string(ERR_get_error(), NULL));

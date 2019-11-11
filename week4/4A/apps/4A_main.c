@@ -3,7 +3,7 @@
 int main() {
 
   SSL_CTX *ctx = NULL;
-  SSL *ssl;
+  SSL *ssl = NULL;
   BIO *web = NULL, *out = NULL;
   X509 *cert = NULL;
 
@@ -46,7 +46,6 @@ int main() {
             ERR_error_string(ERR_get_error(), NULL));
     exit(1);
   }
-
 
   /* 从 bio 流中获取到 tls 信息 */
   BIO_get_ssl(web, &ssl);
